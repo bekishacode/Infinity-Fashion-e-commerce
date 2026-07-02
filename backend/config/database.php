@@ -1,4 +1,6 @@
 <?php
+// backend/config/database.php
+
 // Only set headers if not running from command line
 if (php_sapi_name() !== 'cli') {
     header("Content-Type: application/json");
@@ -12,12 +14,61 @@ if (php_sapi_name() !== 'cli') {
     }
 }
 
+// ============================================
+// FIX: Load .env from the CORRECT path
+// ============================================
+function loadEnv($filePath) {
+    if (!file_exists($filePath)) {
+        return false;
+    }
+    
+    $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+        $parts = explode('=', $line, 2);
+        if (count($parts) === 2) {
+            $key = trim($parts[0]);
+            $value = trim($parts[1]);
+            $_ENV[$key] = $value;
+            putenv("$key=$value");
+        }
+    }
+    return true;
+}
+
+// ============================================
+// FIX: .env is in backend/ folder, NOT config/
+// ============================================
+$envFile = __DIR__ . '/../.env';  // ← GO UP ONE LEVEL
+
+if (file_exists($envFile)) {
+    loadEnv($envFile);
+} else {
+    // Fallback: try the old location
+    $envFile = __DIR__ . '/.env';
+    if (file_exists($envFile)) {
+        loadEnv($envFile);
+    }
+}
+
+// ============================================
+// Database class with fallback credentials
+// ============================================
 class Database {
-    private $host = "localhost";
-    private $db_name = "style_badge";
-    private $username = "root";
-    private $password = "Jesuspaiditall24!";
+    private $host;
+    private $db_name;
+    private $username;
+    private $password;
     private $conn;
+
+    public function __construct() {
+        $this->host = getenv('DB_HOST') ?: 'localhost';
+        $this->db_name = getenv('DB_NAME') ?: 'style_badge';
+        $this->username = getenv('DB_USER') ?: 'root';
+        $this->password = getenv('DB_PASS') ?: 'Jesuspaiditall24!';
+    }
 
     public function getConnection() {
         if ($this->conn === null) {
@@ -30,7 +81,6 @@ class Database {
                 $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             } catch(PDOException $e) {
-                // Only output JSON if not in CLI mode
                 if (php_sapi_name() !== 'cli') {
                     echo json_encode([
                         "success" => false,

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation(); // ← Get current route
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -23,6 +24,30 @@ const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
+  // ============================================
+  // Check if link is active
+  // ============================================
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
+  // ============================================
+  // NavLink Component with active underline
+  // ============================================
+  const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) => {
+    const active = isActive(to);
+    return (
+      <Link
+        to={to}
+        className={`text-charcoal hover:text-royal-blue transition font-medium relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-magenta after:transition-all after:duration-300 ${
+          active ? 'after:w-full text-royal-blue' : 'after:w-0 hover:after:w-full'
+        }`}
+      >
+        {children}
+      </Link>
+    );
+  };
+
   return (
     <>
       <nav className="bg-white/95 backdrop-blur-sm shadow-lg fixed top-0 left-0 right-0 z-50">
@@ -37,30 +62,10 @@ const Navbar: React.FC = () => {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex space-x-8">
-              <Link 
-                to="/" 
-                className="text-charcoal hover:text-royal-blue transition font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-magenta after:transition-all after:duration-300 hover:after:w-full"
-              >
-                Home
-              </Link>
-              <Link 
-                to="/products" 
-                className="text-charcoal hover:text-royal-blue transition font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-magenta after:transition-all after:duration-300 hover:after:w-full"
-              >
-                Products
-              </Link>
-              <Link 
-                to="/cart" 
-                className="text-charcoal hover:text-royal-blue transition font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-magenta after:transition-all after:duration-300 hover:after:w-full"
-              >
-                Cart
-              </Link>
-              <Link 
-                to="/track-order" 
-                className="text-charcoal hover:text-royal-blue transition font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-magenta after:transition-all after:duration-300 hover:after:w-full"
-              >
-                Track Order
-              </Link>
+              <NavLink to="/">Home</NavLink>
+              <NavLink to="/products">Products</NavLink>
+              <NavLink to="/cart">Cart</NavLink>
+              <NavLink to="/track-order">Track Order</NavLink>
             </div>
             
             {/* Mobile Menu Button */}
@@ -117,35 +122,43 @@ const Navbar: React.FC = () => {
             </div>
           </div>
           
-          {/* Navigation Links */}
+          {/* Navigation Links with active styles */}
           <div className="flex flex-col py-4">
             <Link 
               to="/" 
               onClick={closeMobileMenu} 
-              className="text-charcoal hover:text-royal-blue hover:bg-gradient-to-r hover:from-royal-blue/5 transition px-6 py-3 font-medium"
+              className={`text-charcoal hover:text-royal-blue hover:bg-gradient-to-r hover:from-royal-blue/5 transition px-6 py-3 font-medium ${
+                isActive('/') ? 'text-royal-blue bg-royal-blue/5 border-r-4 border-magenta' : ''
+              }`}
             >
-              🏠 Home
+              Home
             </Link>
             <Link 
               to="/products" 
               onClick={closeMobileMenu} 
-              className="text-charcoal hover:text-royal-blue hover:bg-gradient-to-r hover:from-royal-blue/5 transition px-6 py-3 font-medium"
+              className={`text-charcoal hover:text-royal-blue hover:bg-gradient-to-r hover:from-royal-blue/5 transition px-6 py-3 font-medium ${
+                isActive('/products') ? 'text-royal-blue bg-royal-blue/5 border-r-4 border-magenta' : ''
+              }`}
             >
-              👕 Products
+              Products
             </Link>
             <Link 
               to="/cart" 
               onClick={closeMobileMenu} 
-              className="text-charcoal hover:text-royal-blue hover:bg-gradient-to-r hover:from-royal-blue/5 transition px-6 py-3 font-medium"
+              className={`text-charcoal hover:text-royal-blue hover:bg-gradient-to-r hover:from-royal-blue/5 transition px-6 py-3 font-medium ${
+                isActive('/cart') ? 'text-royal-blue bg-royal-blue/5 border-r-4 border-magenta' : ''
+              }`}
             >
-              🛒 Cart
+              Cart
             </Link>
             <Link 
               to="/track-order" 
               onClick={closeMobileMenu} 
-              className="text-charcoal hover:text-royal-blue hover:bg-gradient-to-r hover:from-royal-blue/5 transition px-6 py-3 font-medium"
+              className={`text-charcoal hover:text-royal-blue hover:bg-gradient-to-r hover:from-royal-blue/5 transition px-6 py-3 font-medium ${
+                isActive('/track-order') ? 'text-royal-blue bg-royal-blue/5 border-r-4 border-magenta' : ''
+              }`}
             >
-              📍 Track Order
+              Track Order
             </Link>
           </div>
           

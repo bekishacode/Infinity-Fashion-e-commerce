@@ -34,6 +34,7 @@ const AdminDashboard: React.FC = () => {
        { path: '/admin/email-settings', icon: '', label: 'Email Settings' },
        { path: '/admin/picklists', icon: '', label: 'Picklist Management' },
        { path: '/admin/categories', icon: '', label: 'Categories' },
+       { path: '/admin/homepage', icon: '', label: 'Homepage' }, 
        { path: '/admin/system', icon: '', label: 'System Settings' }
       ]
     : navItems;
@@ -62,7 +63,7 @@ const AdminDashboard: React.FC = () => {
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-1 py-3 rounded-lg transition-all duration-200 ${
                     isActive(item.path)
                       ? 'text-white bg-green font-bold'
                       : 'text-white/80 hover:bg-white/10 hover:text-white'

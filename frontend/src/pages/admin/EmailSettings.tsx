@@ -168,14 +168,19 @@ const EmailSettings: React.FC = () => {
 
   const editTemplate = async (template: any) => {
     try {
+      console.log('🔍 Fetching template with ID:', template.id);
       const result = await adminService.getEmailTemplateFull(template.id) as ApiResponse<any>;
+      console.log('🔍 Full response:', result);
+      
       if (result.success && result.data) {
         setSelectedTemplate(result.data);
         setShowTemplateEditor(true);
       } else {
-        showMessage('error', 'Failed to load template details');
+        console.error('❌ Failed to load template:', result.message);
+        showMessage('error', result.message || 'Failed to load template details');
       }
     } catch (error) {
+      console.error('❌ Error fetching template:', error);
       showMessage('error', 'Something went wrong');
     }
   };
@@ -376,18 +381,6 @@ const EmailSettings: React.FC = () => {
               >
                 {sendingTest ? 'Sending...' : 'Send Test'}
               </button>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h3 className="font-medium text-blue-800 mb-2">📧 Gmail Setup Guide</h3>
-            <div className="space-y-2 text-sm">
-              <p className="text-gray-600">1. Go to Google Account → Security</p>
-              <p className="text-gray-600">2. Enable 2-Step Verification</p>
-              <p className="text-gray-600">3. Generate App Password (select "Mail")</p>
-              <p className="text-gray-600">4. Copy the 16-character password</p>
-              <p className="text-gray-600 mt-2 font-medium">Settings to use:</p>
-              <p className="text-gray-600 text-xs">SMTP: smtp.gmail.com | Port: 587 | TLS</p>
             </div>
           </div>
         </div>

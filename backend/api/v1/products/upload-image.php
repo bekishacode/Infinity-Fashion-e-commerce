@@ -1,5 +1,7 @@
 <?php
-require_once '../../../config/database.php';
+require_once __DIR__ . '/../../../bootstrap.php';
+
+$method = $_SERVER['REQUEST_METHOD'];
 
 // Note: This endpoint doesn't actually need database connection for file upload
 // But keeping it for consistency

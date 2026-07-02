@@ -32,6 +32,7 @@ import SystemSettings from './pages/admin/SystemSettings';
 import CategoryList from './pages/admin/Categories';
 import CategoryContent from './pages/admin/Categories/CategoryContent';
 import ReviewList from './pages/admin/Reviews/ReviewList';
+import HomepageManagement from './pages/admin/Homepage';
 
 function App() {
   return (
@@ -84,6 +85,7 @@ function App() {
             <Route path="categories" element={<CategoryList />} />
             <Route path="categories/:categoryId/content" element={<CategoryContent />} />
             <Route path="reviews" element={<ReviewList />} />
+            <Route path="homepage/*" element={<HomepageManagement />} />
           </Route>
         </Routes>
       </Router>

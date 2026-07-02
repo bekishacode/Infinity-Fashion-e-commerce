@@ -6,8 +6,8 @@ import { loadingManager } from './loadingManager';
 // ============================================
 // FIX: Use your production URL as default
 // ============================================
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://stylebadgetex.com';
-const ASSET_BASE_URL = process.env.REACT_APP_ASSET_URL || 'https://stylebadgetex.com';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://stylebadgetex.com/backend';
+const ASSET_BASE_URL = process.env.REACT_APP_ASSET_URL || 'https://stylebadgetex.com/backend';
 
 type LoadingKey = string;
 
@@ -20,12 +20,10 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  // Register a loading callback for a specific component
   registerLoadingCallback(key: LoadingKey, callback: (loading: boolean) => void) {
     this.loadingCallbacks.set(key, callback);
   }
 
-  // Unregister loading callback
   unregisterLoadingCallback(key: LoadingKey) {
     this.loadingCallbacks.delete(key);
   }
@@ -40,7 +38,7 @@ class ApiClient {
   }
 
   private getAuthToken(): string | null {
-    return localStorage.getItem('admin_token');
+     return localStorage.getItem('session_token') || localStorage.getItem('admin_token');
   }
 
   getImageUrl(path: string | null | undefined): string | null {
@@ -49,7 +47,6 @@ class ApiClient {
     return `${ASSET_BASE_URL}${path}`;
   }
 
-  // Cancel an in-progress request
   cancelRequest(requestKey: string) {
     const controller = this.activeRequests.get(requestKey);
     if (controller) {
@@ -58,7 +55,6 @@ class ApiClient {
     }
   }
 
-  // Cancel all pending requests
   cancelAllRequests() {
     this.activeRequests.forEach((controller, key) => {
       controller.abort();
@@ -81,18 +77,10 @@ class ApiClient {
     const url = `${this.baseUrl}${endpoint}`;
     const headers: Record<string, string> = {};
 
-    // ============================================
-    // FIX: Only add Content-Type if not FormData
-    // ============================================
     if (!(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
 
-    // ============================================
-    // FIX: Only add Authorization if:
-    // 1. Token exists
-    // 2. skipAuth is false (not skipping auth)
-    // ============================================
     if (!skipAuth) {
       const token = this.getAuthToken();
       if (token) {
@@ -100,10 +88,8 @@ class ApiClient {
       }
     }
 
-    // Create abort controller for cancellation
     const controller = new AbortController();
     if (requestKey) {
-      // Cancel previous request with same key if exists
       this.cancelRequest(requestKey);
       this.activeRequests.set(requestKey, controller);
     }
@@ -120,31 +106,43 @@ class ApiClient {
     try {
       const response = await fetch(url, config);
       
-      // ============================================
-      // FIX: Better error handling for non-JSON responses
-      // ============================================
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch {
-          errorMessage = response.statusText || errorMessage;
-        }
-        throw new Error(errorMessage);
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        data = {
+          success: false,
+          message: response.statusText || `HTTP ${response.status}`
+        };
       }
       
-      const data = await response.json();
+      // ============================================
+      // ✅ FIX: Check for 401 Unauthorized (Session Expired)
+      // ============================================
+      if (response.status === 401) {
+        // Clear all session data
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('session_token');
+        localStorage.removeItem('admin_info');
+        localStorage.removeItem('session_expiry');
+        localStorage.removeItem('admin_username');
+        
+        // Redirect to login page if not already there
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/admin/login')) {
+          window.location.href = '/admin/login';
+        }
+        
+        return data as ApiResponse<T>;
+      }
       
       if (requestKey) {
         this.activeRequests.delete(requestKey);
       }
       
-      // Return the response directly - let the caller handle success/failure
       return data as ApiResponse<T>;
+      
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        // Request was cancelled - don't treat as error
         return { success: false, message: 'Request cancelled', data: null as any };
       }
       throw error;
@@ -153,10 +151,6 @@ class ApiClient {
       loadingManager.stop();
     }
   }
-
-  // ============================================
-  // FIX: All methods now accept skipAuth parameter
-  // ============================================
 
   async get<T>(
     endpoint: string, 
@@ -231,11 +225,16 @@ class ApiClient {
     formData.append('image', file);
     return this.post<T>(endpoint, formData, requestKey, skipAuth);
   }
+
+  async logoutOtherSessions(): Promise<ApiResponse<null>> {
+    const sessionToken = localStorage.getItem('session_token');
+    if (!sessionToken) {
+      return { success: false, message: 'No active session', data: null };
+    }
+    return this.post('/admin/logout-others', { session_token: sessionToken });
+  }
 }
 
-// ============================================
-// Export with production URL as default
-// ============================================
 export const apiClient = new ApiClient(API_BASE_URL);
 export const getImageUrl = (path: string | null | undefined): string | null => apiClient.getImageUrl(path);
 export default apiClient;

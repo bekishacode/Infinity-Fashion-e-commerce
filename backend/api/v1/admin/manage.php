@@ -1,9 +1,16 @@
 <?php
-require_once '../../../config/database.php';
-require_once 'verify.php';
+// backend/api/v1/admin/manage.php
 
-// Verify admin is logged in
-$admin = verifyAdminToken();
+require_once __DIR__ . '/../../../bootstrap.php';
+
+$method = $_SERVER['REQUEST_METHOD'];
+require_once __DIR__ . '/verify.php';
+
+// ============================================
+// ✅ FIX: Get admin from the auth array
+// ============================================
+$auth = verifyAdminToken();
+$admin = $auth['admin'];  // ← Get the admin data
 
 // Only super admin can manage other admins
 if ($admin['role'] !== 'super_admin') {

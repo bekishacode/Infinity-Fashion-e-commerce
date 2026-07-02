@@ -1,5 +1,9 @@
 <?php
-require_once '../../../config/database.php';
+// backend/api/v1/admin/verify-otp.php
+
+require_once __DIR__ . '/../../../bootstrap.php';
+
+$method = $_SERVER['REQUEST_METHOD'];
 
 $database = new Database();
 $db = $database->getConnection();
@@ -28,9 +32,15 @@ if (!$admin) {
     sendResponse(false, 'Invalid email or OTP', null, 400);
 }
 
-// Verify OTP
+// ============================================
+// Verify OTP - Type: 'password_reset'
+// ============================================
 $otpSql = "SELECT id FROM admin_password_resets 
-           WHERE admin_id = :admin_id AND otp = :otp AND used = 0 AND expires_at > NOW()";
+           WHERE admin_id = :admin_id 
+           AND otp = :otp 
+           AND type = 'password_reset'
+           AND used = 0 
+           AND expires_at > NOW()";
 $otpStmt = $db->prepare($otpSql);
 $otpStmt->execute([':admin_id' => $admin['id'], ':otp' => $otp]);
 $reset = $otpStmt->fetch(PDO::FETCH_ASSOC);
@@ -46,5 +56,12 @@ $updateStmt->execute([':id' => $reset['id']]);
 
 // Generate reset token
 $resetToken = bin2hex(random_bytes(32));
-sendResponse(true, 'OTP verified successfully', ['reset_token' => $resetToken]);
+
+// Store reset token (optional - you may want to create a separate table)
+// Or just use the OTP record ID as a token
+
+sendResponse(true, 'OTP verified successfully', [
+    'reset_token' => $resetToken,
+    'admin_id' => $admin['id']
+]);
 ?>

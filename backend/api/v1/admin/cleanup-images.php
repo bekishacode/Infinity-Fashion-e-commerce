@@ -1,11 +1,20 @@
 <?php
-require_once '../../../config/database.php';
-require_once 'verify.php';
+// backend/api/v1/admin/cleanup-images.php
+
+require_once __DIR__ . '/../../../bootstrap.php';
+
+$method = $_SERVER['REQUEST_METHOD'];
+require_once __DIR__ . '/verify.php';
+
+// ============================================
+// ✅ FIX: Get admin from the auth array
+// ============================================
+$auth = verifyAdminToken();
+$admin = $auth['admin'];
 
 // Verify admin is logged in (only super admin)
-$admin = verifyAdminToken();
-if ($admin['role'] !== 'super_admin') {
-    sendResponse(false, 'Access denied. Only super admin can perform cleanup.', null, 403);
+if ($admin['role'] !== 'super_admin' && $admin['role'] !== 'admin') {
+    sendResponse(false, 'Access denied', null, 403);
 }
 
 $database = new Database();

@@ -1,20 +1,23 @@
 <?php
 date_default_timezone_set('Africa/Addis_Ababa');
 
-require_once '../../../config/database.php';
-require_once '../../../helpers/EmailHelper.php';
+require_once __DIR__ . '/../../../bootstrap.php';
+require_once __DIR__ . '/../../../helpers/EmailHelper.php';
 
 $database = new Database();
 $db = $database->getConnection();
 
 header("Content-Type: application/json");
 
-// Rate Limit Configuration
-define('MAX_REQUESTS_PER_HOUR', 6);        // Max 6 requests per hour
-define('MIN_SECONDS_BETWEEN_REQUESTS', 30); // Minimum 30 seconds between requests
+// =============================================
+// RATE LIMIT CONFIGURATION - Forgot Password Only
+// =============================================
+define('MAX_OTP_REQUESTS', 5);         // Max 5 OTP requests
+define('LOCKOUT_MINUTES', 15);          // Lockout for 15 minutes
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(false, 'Method not allowed', null, 405);
+    exit();
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
@@ -22,6 +25,7 @@ $email = $input['email'] ?? '';
 
 if (empty($email)) {
     sendResponse(false, 'Email is required', null, 400);
+    exit();
 }
 
 // Check if admin exists
@@ -31,50 +35,61 @@ $stmt->execute([':email' => $email]);
 $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$admin) {
-    // For security, don't reveal that email doesn't exist
-    sendResponse(true, 'If your email is registered, you will receive an OTP', null, 200);
+    sendResponse(false, 'Only registered email addresses are allowed. An OTP will be sent if your email is registered.', null, 404);
+    exit();
 }
 
 // =============================================
-// RATE LIMITING CHECK
+// RATE LIMITING CHECK - 5 requests in 15 minutes
 // =============================================
 
-// Check recent requests within last hour
-$checkRateSql = "SELECT request_count, first_request_at, last_request_at 
-                 FROM admin_password_resets 
-                 WHERE admin_id = :admin_id 
-                 AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
-                 ORDER BY created_at DESC LIMIT 1";
-$checkStmt = $db->prepare($checkRateSql);
-$checkStmt->execute([':admin_id' => $admin['id']]);
-$recent = $checkStmt->fetch(PDO::FETCH_ASSOC);
+// Count OTP requests in the last 15 minutes
+$countSql = "SELECT COUNT(*) as request_count, MAX(created_at) as last_request_at 
+             FROM admin_password_resets 
+             WHERE admin_id = :admin_id 
+             AND type = 'password_reset'
+             AND created_at > DATE_SUB(NOW(), INTERVAL :lockout_minutes MINUTE)";
+$countStmt = $db->prepare($countSql);
+$countStmt->execute([
+    ':admin_id' => $admin['id'],
+    ':lockout_minutes' => LOCKOUT_MINUTES
+]);
+$result = $countStmt->fetch(PDO::FETCH_ASSOC);
 
-if ($recent) {
-    $requestCount = $recent['request_count'];
-    $lastRequest = strtotime($recent['last_request_at']);
+$requestCount = $result['request_count'] ?? 0;
+$lastRequestAt = $result['last_request_at'] ?? null;
+
+// If 5 or more requests in the last 15 minutes, lock out
+if ($requestCount >= MAX_OTP_REQUESTS) {
     $now = time();
-    $secondsSinceLastRequest = $now - $lastRequest;
+    $lastRequestTime = strtotime($lastRequestAt);
+    $timeElapsed = $now - $lastRequestTime;
+    $lockoutSeconds = LOCKOUT_MINUTES * 60;
+    $remainingSeconds = $lockoutSeconds - $timeElapsed;
     
-    // Check hourly limit
-    if ($requestCount >= MAX_REQUESTS_PER_HOUR) {
-        $minutesToWait = 60 - (int)(($now - strtotime($recent['first_request_at'])) / 60);
-        sendResponse(false, "Too many attempts. You have reached the limit of " . MAX_REQUESTS_PER_HOUR . " requests per hour. Please try again after {$minutesToWait} minutes.", null, 429);
-    }
-    
-    // Check time between requests
-    if ($secondsSinceLastRequest < MIN_SECONDS_BETWEEN_REQUESTS) {
-        $waitTime = MIN_SECONDS_BETWEEN_REQUESTS - $secondsSinceLastRequest;
-        sendResponse(false, "Please wait {$waitTime} seconds before requesting another OTP.", null, 429);
+    if ($remainingSeconds > 0) {
+        $remainingMinutes = ceil($remainingSeconds / 60);
+        
+        sendResponse(false, "Too many OTP requests. You have reached the limit of " . MAX_OTP_REQUESTS . " requests. Please wait {$remainingMinutes} minute" . ($remainingMinutes > 1 ? 's' : '') . " before trying again.", null, 429);
+        exit();
+    } else {
+        // If lockout expired, reset - allow new request
+        $requestCount = 0;
     }
 }
 
-// Generate 6-digit OTP
+// =============================================
+// GENERATE OTP
+// =============================================
 $otp = sprintf("%06d", mt_rand(1, 999999));
-$expires_at = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+$expiresInMinutes = 15;
 
 // Check if existing OTP exists (not used, not expired)
-$existingSql = "SELECT id, request_count FROM admin_password_resets 
-                WHERE admin_id = :admin_id AND used = 0 AND expires_at > NOW()
+$existingSql = "SELECT id FROM admin_password_resets 
+                WHERE admin_id = :admin_id 
+                AND type = 'password_reset'
+                AND used = 0 
+                AND expires_at > NOW()
                 ORDER BY created_at DESC LIMIT 1";
 $existingStmt = $db->prepare($existingSql);
 $existingStmt->execute([':admin_id' => $admin['id']]);
@@ -82,34 +97,38 @@ $existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
 
 if ($existing) {
     // Update existing OTP
-    $newCount = $existing['request_count'] + 1;
     $updateSql = "UPDATE admin_password_resets 
                   SET otp = :otp, 
-                      expires_at = :expires_at, 
-                      request_count = :request_count,
-                      last_request_at = NOW(),
-                      used = 0
+                      expires_at = DATE_ADD(NOW(), INTERVAL :expires_in MINUTE),
+                      last_request_at = NOW()
                   WHERE id = :id";
     $updateStmt = $db->prepare($updateSql);
     $updateStmt->execute([
         ':otp' => $otp,
-        ':expires_at' => $expires_at,
-        ':request_count' => $newCount,
+        ':expires_in' => $expiresInMinutes,
         ':id' => $existing['id']
     ]);
 } else {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    
     // Insert new OTP
-    $insertSql = "INSERT INTO admin_password_resets (admin_id, otp, expires_at, request_count, first_request_at, last_request_at) 
-                  VALUES (:admin_id, :otp, :expires_at, 1, NOW(), NOW())";
+    $insertSql = "INSERT INTO admin_password_resets 
+                  (admin_id, otp, type, expires_at, ip_address, user_agent) 
+                  VALUES (:admin_id, :otp, 'password_reset', DATE_ADD(NOW(), INTERVAL :expires_in MINUTE), :ip, :user_agent)";
     $insertStmt = $db->prepare($insertSql);
     $insertStmt->execute([
         ':admin_id' => $admin['id'],
         ':otp' => $otp,
-        ':expires_at' => $expires_at
+        ':expires_in' => $expiresInMinutes,
+        ':ip' => $ip,
+        ':user_agent' => $userAgent
     ]);
 }
 
-// Send email with OTP
+// =============================================
+// SEND EMAIL
+// =============================================
 try {
     $emailHelper = new EmailHelper($db);
     $result = $emailHelper->sendEmail($email, 'otp_verification', [

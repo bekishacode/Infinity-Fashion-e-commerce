@@ -1,9 +1,14 @@
 <?php
 // backend/api/v1/admin/categories/list.php
 require_once __DIR__ . '/../../../../config/database.php';
+require_once __DIR__ . '/../verify.php';
+
 
 $database = new Database();
 $db = $database->getConnection();
+
+// Verify admin is logged in
+verifyAdminToken();
 
 try {
     $sql = "SELECT id, name, display_name, slug, is_active, sort_order

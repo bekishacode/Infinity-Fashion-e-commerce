@@ -10,7 +10,7 @@ interface AdminInfo {
   profile_image?: string | null;
 }
 
-const ASSET_BASE_URL = process.env.REACT_APP_ASSET_URL || 'http://localhost:8000';
+const ASSET_BASE_URL = process.env.REACT_APP_ASSET_URL || 'http://stylebadgetex.com';
 
 const AdminNavbar: React.FC = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -26,13 +26,12 @@ const AdminNavbar: React.FC = () => {
     }
   }, []);
 
-  // Listen for storage changes (when profile image is updated)
   useEffect(() => {
     const handleStorageChange = () => {
       const storedAdmin = localStorage.getItem('admin_info');
       if (storedAdmin) {
         setAdminInfo(JSON.parse(storedAdmin));
-        setImageError(false); // Reset error on update
+        setImageError(false);
       }
     };
     
@@ -75,19 +74,18 @@ const AdminNavbar: React.FC = () => {
   const profileImage = getProfileImageUrl();
 
   return (
-    <nav className="bg-gradient-to-br from-slate-700 via-purple-900 to-slate-900 fixed top-0 right-0 left-64 z-30 h-16">
-      <div className="flex justify-end items-center h-full px-6">
+    <nav className="bg-gray-100 lg:bg-gradient-to-br lg:from-slate-700 lg:via-purple-900 lg:to-slate-900 fixed top-0 right-0 left-0 lg:left-64 z-20 h-16 shadow-sm lg:shadow-none">
+      <div className="flex justify-end items-center h-full px-4 sm:px-6">
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-3 hover:bg-white/10 px-3 py-2 rounded-lg transition-all duration-200"
+            className="flex items-center gap-3 hover:bg-gray-200 lg:hover:bg-white/10 px-3 py-2 rounded-lg transition-all duration-200"
           >
-            {/* Profile Avatar with Image Support */}
             {profileImage ? (
               <img
                 src={profileImage}
                 alt={adminInfo?.full_name || 'Admin'}
-                className="w-9 h-9 rounded-full object-cover border-2 border-white shadow-md"
+                className="w-9 h-9 rounded-full object-cover border-2 border-royal-blue lg:border-white shadow-md"
                 onError={() => setImageError(true)}
               />
             ) : (
@@ -96,15 +94,15 @@ const AdminNavbar: React.FC = () => {
               </div>
             )}
             <div className="text-left hidden md:block">
-              <p className="text-sm font-medium text-white">
+              <p className="text-sm font-medium text-gray-800 lg:text-white">
                 {adminInfo?.full_name || 'Admin'}
               </p>
-              <p className="text-xs text-white/70">
+              <p className="text-xs text-gray-500 lg:text-white/70">
                 {adminInfo?.role?.replace('_', ' ') || 'Admin'}
               </p>
             </div>
             <svg
-              className={`w-4 h-4 text-white/70 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-gray-600 lg:text-white/70 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -115,10 +113,8 @@ const AdminNavbar: React.FC = () => {
 
           {isProfileOpen && (
             <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50" style={{ right: 'auto', left: 'auto', transform: 'translateX(calc(-35%))', minWidth: '300px' }}>
-              {/* Profile Header with Image */}
               <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
                 <div className="flex items-center gap-4">
-                  {/* Profile Image in Dropdown */}
                   {profileImage ? (
                     <img
                       src={profileImage}
@@ -145,8 +141,7 @@ const AdminNavbar: React.FC = () => {
                 </div>
               </div>
 
-              {/* Menu Items */}
-              <div className="py-2 ">
+              <div className="py-2">
                 <Link
                   to="/admin/profile"
                   onClick={() => setIsProfileOpen(false)}
@@ -175,7 +170,6 @@ const AdminNavbar: React.FC = () => {
                 </Link>
               </div>
 
-              {/* Logout Button */}
               <div className="border-t border-gray-100">
                 <button
                   onClick={handleLogout}

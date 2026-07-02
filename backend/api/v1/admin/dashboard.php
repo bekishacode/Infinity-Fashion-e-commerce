@@ -1,5 +1,18 @@
 <?php
-require_once '../../../config/database.php';
+require_once __DIR__ . '/../../../bootstrap.php';
+require_once __DIR__ . '/verify.php';
+$auth = verifyAdminToken();
+// Log the result
+error_log("=== DASHBOARD AUTH RESULT ===");
+error_log("Auth keys: " . implode(', ', array_keys($auth)));
+error_log("Session token present: " . (isset($auth['session_token']) ? 'YES' : 'NO'));
+if (isset($auth['session_token'])) {
+    error_log("Session token: " . substr($auth['session_token'], 0, 20) . "...");
+}
+error_log("Admin present: " . (isset($auth['admin']) ? 'YES' : 'NO'));
+
+
+$method = $_SERVER['REQUEST_METHOD'];
 
 $database = new Database();
 $db = $database->getConnection();

@@ -164,6 +164,17 @@ export interface LoginResponse {
     role: string;
     profile_image?: string | null;
   };
+  // 2FA Properties (only present when 2FA is required)
+  requires_2fa?: boolean;
+  admin_id?: number;
+  email_sent?: boolean;
+  message?: string;
+  // Session properties (only present after 2FA verification)
+  session_token?: string;
+  expires_at?: string;
+  // Session management properties
+  has_active_session?: boolean;
+  active_sessions_count?: number;
 }
 
 // Forgot Password Response
@@ -237,6 +248,25 @@ export interface OtpScanResponse {
   };
   has_expired: boolean;
   hours_threshold: number;
+}
+
+export interface HeroSlide {
+  id: number;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  bg_gradient: string;
+  button_text: string;
+  button_link: string;
+  sort_order: number;
+  is_active: number;
+  created_at?: string;
+  updated_at?: string;
+}
+//For Hero Slide Form
+export interface UploadImageResponse {
+  image_url: string;
 }
 
 // OTP Delete Response

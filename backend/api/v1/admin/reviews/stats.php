@@ -1,6 +1,10 @@
 <?php
 // backend/api/v1/admin/reviews/stats.php
 require_once __DIR__ . '/../../../../config/database.php';
+require_once __DIR__ . '/../verify.php';
+
+$auth = verifyAdminToken();
+$admin = $auth['admin'];
 
 $database = new Database();
 $db = $database->getConnection();

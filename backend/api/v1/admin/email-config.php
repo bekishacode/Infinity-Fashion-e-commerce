@@ -1,9 +1,16 @@
 <?php
-require_once '../../../config/database.php';
+// backend/api/v1/admin/email-config.php
+
+require_once __DIR__ . '/../../../bootstrap.php';
+
+$method = $_SERVER['REQUEST_METHOD'];
 require_once 'verify.php';
 
-// Verify admin is logged in
-$admin = verifyAdminToken();
+// ============================================
+//FIX: Get admin from the auth array
+// ============================================
+$auth = verifyAdminToken();
+$admin = $auth['admin'];  // ← Get the admin data
 
 // Only super admin can manage email config
 if ($admin['role'] !== 'super_admin') {
