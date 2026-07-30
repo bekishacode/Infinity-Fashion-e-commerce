@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   ArrowRight, 
   Sparkles, 
@@ -20,8 +21,23 @@ const services = [
     gradient: 'from-magenta/20 via-pink-500/10 to-rose-500/5',
     features: ['No minimum order', 'Design upload & preview', 'Dropshipping available', 'Quick turnaround'],
     cta: 'Start Designing',
-    ctaLink: '/print-on-demand',
+    ctaLink: '/products',
     bgGradient: 'from-magenta to-pink-600',
+  },
+  
+  {
+    id: 'retail',
+    title: 'Retail',
+    subtitle: 'Individual & Gift Shopping',
+    icon: Store,
+    iconBg: 'bg-green/20',
+    iconColor: 'text-green',
+    description: 'Single item purchases. Latest trends and styles for everyone. Shop unique fashion pieces.',
+    gradient: 'from-green/20 via-emerald-500/10 to-teal-500/5',
+    features: ['No minimum order', 'Fast shipping', 'Easy returns', 'Secure checkout'],
+    cta: 'Shop Now',
+    ctaLink: '/products',
+    bgGradient: 'from-green to-emerald-600',
   },
   {
     id: 'wholesale',
@@ -34,32 +50,54 @@ const services = [
     gradient: 'from-royal-blue/20 via-blue-500/10 to-indigo-500/5',
     features: ['Bulk pricing', 'Custom logo printing', 'Samples available', '15-20 days delivery'],
     cta: 'Request Quote',
-    ctaLink: '/wholesale',
+    ctaLink: '/products',
     bgGradient: 'from-royal-blue to-blue-700',
-  },
-  {
-    id: 'retail',
-    title: 'Retail',
-    subtitle: 'Individual & Gift Shopping',
-    icon: Store,
-    iconBg: 'bg-green/20',
-    iconColor: 'text-green',
-    description: 'Single item purchases. Latest trends and styles for everyone. Shop unique fashion pieces.',
-    gradient: 'from-green/20 via-emerald-500/10 to-teal-500/5',
-    features: ['No minimum order', 'Fast shipping', 'Easy returns', 'Secure checkout'],
-    cta: 'Shop Now',
-    ctaLink: '/products?type=retail',
-    bgGradient: 'from-green to-emerald-600',
   },
 ];
 
 const ServicesSection: React.FC = () => {
+  // Animation variants with valid easing
+  const fadeUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.6 }
+    }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const serviceItem = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
   return (
     <section className="w-full py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={fadeUp}
+          className="text-center max-w-3xl mx-auto mb-12"
+        >
           <div className="inline-flex items-center gap-2 bg-royal-blue/10 text-royal-blue px-4 py-2 rounded-full text-sm font-medium mb-4">
             <Sparkles className="w-4 h-4" />
             Our Services
@@ -73,13 +111,20 @@ const ServicesSection: React.FC = () => {
           <p className="text-gray-600 text-base max-w-2xl mx-auto">
             Choose the service that fits your needs — from bulk wholesale to individual custom prints
           </p>
-        </div>
+        </motion.div>
 
         {/* Services */}
-        <div className="space-y-12">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={staggerContainer}
+          className="space-y-12"
+        >
           {services.map((service, index) => (
-            <div
+            <motion.div
               key={service.id}
+              variants={serviceItem}
               className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-8 lg:gap-12 items-start`}
             >
               {/* Visual Side */}
@@ -136,20 +181,20 @@ const ServicesSection: React.FC = () => {
                     {service.cta}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
-                  <Link
-                    to="/products"
-                    className="inline-flex items-center gap-2 bg-gray-100 text-charcoal px-6 py-2.5 rounded-full font-semibold hover:bg-gray-200 transition-all duration-300 text-sm"
-                  >
-                    Browse Products
-                  </Link>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Bottom CTA */}
-        <div className="mt-16 text-center">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={fadeUp}
+          className="mt-16 text-center"
+        >
           <Link
             to="/contact"
             className="inline-flex items-center gap-2 bg-charcoal text-white px-8 py-3.5 rounded-full font-semibold hover:shadow-2xl transition-all duration-300 hover:scale-105"
@@ -157,7 +202,7 @@ const ServicesSection: React.FC = () => {
             Let's Work Together
             <ArrowRight className="w-5 h-5" />
           </Link>
-        </div>
+        </motion.div>
 
       </div>
     </section>

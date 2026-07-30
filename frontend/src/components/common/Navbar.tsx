@@ -64,7 +64,7 @@ const Navbar: React.FC = () => {
             <div className="hidden md:flex space-x-8">
               <NavLink to="/">Home</NavLink>
               <NavLink to="/products">Products</NavLink>
-              <NavLink to="/cart">Cart</NavLink>
+              <NavLink to="/about">About Us</NavLink>
               <NavLink to="/track-order">Track Order</NavLink>
             </div>
             
@@ -143,13 +143,13 @@ const Navbar: React.FC = () => {
               Products
             </Link>
             <Link 
-              to="/cart" 
+              to="/about" 
               onClick={closeMobileMenu} 
               className={`text-charcoal hover:text-royal-blue hover:bg-gradient-to-r hover:from-royal-blue/5 transition px-6 py-3 font-medium ${
-                isActive('/cart') ? 'text-royal-blue bg-royal-blue/5 border-r-4 border-magenta' : ''
+                isActive('/about') ? 'text-royal-blue bg-royal-blue/5 border-r-4 border-magenta' : ''
               }`}
             >
-              Cart
+              About Us
             </Link>
             <Link 
               to="/track-order" 

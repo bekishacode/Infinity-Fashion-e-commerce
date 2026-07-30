@@ -6,6 +6,7 @@ require_once 'verify.php';
 
 // Verify admin is logged in
 $admin = verifyAdminToken();
+$adminData = $admin['admin'];
 
 $database = new Database();
 $db = $database->getConnection();
@@ -106,7 +107,7 @@ if ($method === 'GET') {
 } elseif ($method === 'PUT') {
     // UPDATE CUSTOMER - Only super admin can update
     // Verify super admin role
-    if ($admin['role'] !== 'super_admin') {
+    if ($adminData['role'] !== 'super_admin') {
         sendResponse(false, 'Only super admin can update customer information', null, 403);
     }
     

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   ArrowRight, 
   Star, 
@@ -15,9 +16,6 @@ import {
   Zap
 } from 'lucide-react';
 
-// ============================================
-// COMPANY VALUES / STATS
-// ============================================
 const companyStats = [
   { 
     id: 1,
@@ -53,9 +51,6 @@ const companyStats = [
   },
 ];
 
-// ============================================
-// COMPANY VALUES / PILLARS
-// ============================================
 const values = [
   {
     id: 1,
@@ -91,14 +86,41 @@ const values = [
   },
 ];
 
-// ============================================
-// ABOUT US SECTION - NO ScrollReveal
-// ============================================
 interface AboutSectionProps {
   brandDescription: string;
 }
 
 const AboutSection: React.FC<AboutSectionProps> = ({ brandDescription }) => {
+  // Animation variants with valid easing
+  const fadeUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.6 }
+    }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const statItem = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
   return (
     <section className="relative w-full py-16 sm:py-20 md:py-24 bg-white overflow-hidden">
       {/* BACKGROUND */}
@@ -110,10 +132,14 @@ const AboutSection: React.FC<AboutSectionProps> = ({ brandDescription }) => {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* ============================================ */}
-        {/* HEADER - STORY TEXT */}
-        {/* ============================================ */}
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 md:mb-20">
+        {/* HEADER */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={fadeUp}
+          className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 md:mb-20"
+        >
           <div className="inline-flex items-center gap-2 bg-royal-blue/10 text-royal-blue px-4 py-2 rounded-full text-sm font-medium mb-4">
             <Sparkles className="w-4 h-4" />
             Our Story
@@ -127,48 +153,64 @@ const AboutSection: React.FC<AboutSectionProps> = ({ brandDescription }) => {
           <p className="text-gray-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
             {brandDescription}
           </p>
-        </div>
+        </motion.div>
 
-        {/* ============================================ */}
-        {/* STATS GRID - 4 STATS */}
-        {/* ============================================ */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mb-16 sm:mb-20">
+        {/* STATS GRID */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={staggerContainer}
+          className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mb-16 sm:mb-20"
+        >
           {companyStats.map((stat) => (
-            <div
+            <motion.div
               key={stat.id}
-              className="group bg-gray-50 rounded-2xl p-5 sm:p-6 text-center hover:bg-white hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100"
+              variants={statItem}
+              whileHover={{ y: -4 }}
+              className="group bg-gray-50 rounded-2xl p-5 sm:p-6 text-center hover:bg-white hover:shadow-xl transition-all duration-300 border border-gray-100"
             >
               <div className={`w-10 h-10 sm:w-12 sm:h-12 ${stat.bgColor} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}>
                 <stat.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${stat.color}`} />
               </div>
               <p className="text-xl sm:text-2xl md:text-3xl font-bold text-charcoal">{stat.value}</p>
               <p className="text-gray-500 text-xs sm:text-sm">{stat.label}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        {/* ============================================ */}
-        {/* VALUES / PILLARS GRID - 4 VALUES */}
-        {/* ============================================ */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-16 sm:mb-20">
+        {/* VALUES GRID */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={staggerContainer}
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-16 sm:mb-20"
+        >
           {values.map((value) => (
-            <div
+            <motion.div
               key={value.id}
-              className="group bg-gray-50 rounded-2xl p-6 sm:p-7 hover:bg-white hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-gray-100"
+              variants={statItem}
+              whileHover={{ y: -8 }}
+              className="group bg-gray-50 rounded-2xl p-6 sm:p-7 hover:bg-white hover:shadow-xl transition-all duration-300 border border-gray-100"
             >
               <div className={`w-12 h-12 ${value.bgColor} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
                 <value.icon className={`w-6 h-6 ${value.color}`} />
               </div>
               <h3 className="text-lg font-bold text-charcoal mb-2">{value.title}</h3>
               <p className="text-gray-500 text-sm leading-relaxed">{value.description}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        {/* ============================================ */}
         {/* CTA BANNER */}
-        {/* ============================================ */}
-        <div className="mt-12 sm:mt-16 md:mt-20 bg-gradient-to-r from-royal-blue/5 via-magenta/5 to-orange/5 rounded-3xl p-6 sm:p-8 md:p-12 border border-gray-100">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={fadeUp}
+          className="mt-12 sm:mt-16 md:mt-20 bg-gradient-to-r from-royal-blue/5 via-magenta/5 to-orange/5 rounded-3xl p-6 sm:p-8 md:p-12 border border-gray-100"
+        >
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-center md:text-left">
               <h3 className="text-xl sm:text-2xl font-bold text-charcoal mb-2">
@@ -194,12 +236,16 @@ const AboutSection: React.FC<AboutSectionProps> = ({ brandDescription }) => {
               </Link>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* ============================================ */}
         {/* TRUST INDICATORS */}
-        {/* ============================================ */}
-        <div className="mt-10 sm:mt-14 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-gray-500">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={fadeUp}
+          className="mt-10 sm:mt-14 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-gray-500"
+        >
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-royal-blue" />
             <span className="text-sm">100% Quality Guarantee</span>
@@ -214,7 +260,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ brandDescription }) => {
             <TrendingUp className="w-5 h-5 text-green" />
             <span className="text-sm">Trusted by 1000+ Businesses</span>
           </div>
-        </div>
+        </motion.div>
 
       </div>
     </section>

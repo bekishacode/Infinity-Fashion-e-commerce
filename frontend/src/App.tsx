@@ -9,7 +9,8 @@ import ProductDetail from './pages/client/ProductDetail';
 import ProductsIndex from './pages/client/Products/ProductsIndex';
 import CategoryProducts from './pages/client/Products/CategoryProducts';
 import SubCategoryProducts from './pages/client/Products/SubCategoryProducts';
-import Cart from './pages/client/Cart';
+import About from './pages/client/About';
+import Contact from './pages/client/Contact'; 
 import Checkout from './pages/client/Checkout';
 import TrackOrder from './pages/client/TrackOrder';
 import AdminLogin from './pages/admin/AdminLogin';
@@ -55,9 +56,10 @@ function App() {
             <Route path="products/category/:categorySlug" element={<CategoryProducts />} />
             <Route path="products/category/:categorySlug/:subCategorySlug" element={<SubCategoryProducts />} />
             <Route path="products/product/:slug" element={<ProductDetail />} />
-            <Route path="cart" element={<Cart />} />
+            <Route path="about" element={<About />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="track-order" element={<TrackOrder />} />
+            <Route path="contact" element={<Contact />} />
           </Route>
 
           {/* Admin Routes - No Navbar/Footer */}

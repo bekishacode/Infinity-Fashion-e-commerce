@@ -123,7 +123,6 @@ const CategoryProducts: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
-  // Use content from API or fallback to defaults
   const getContent = () => ({
     how_to_order: category?.how_to_order?.length ? category.how_to_order : DEFAULT_CONTENT.how_to_order,
     faqs: category?.faqs?.length ? category.faqs : DEFAULT_CONTENT.faqs,
@@ -133,7 +132,6 @@ const CategoryProducts: React.FC = () => {
   });
 
   useEffect(() => {
-    // Scroll to top when component mounts
     window.scrollTo(0, 0);
     fetchCategoryData();
   }, [categorySlug, location.search]);
@@ -146,7 +144,6 @@ const CategoryProducts: React.FC = () => {
         const data = response.data as { category: Category; sub_categories: SubCategory[] };
         setCategory(data.category);
         setSubCategories(data.sub_categories || []);
-        // Scroll to top after data loads
         window.scrollTo(0, 0);
       }
     } catch (error) {
@@ -183,7 +180,6 @@ const CategoryProducts: React.FC = () => {
     ));
   };
 
-  // Determine grid columns and card sizing based on number of subcategories
   const getGridConfig = (): GridConfig => {
     const count = subCategories.length;
     if (count === 0) return { cols: 'grid-cols-1', size: 'normal' };
@@ -222,24 +218,20 @@ const CategoryProducts: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Section 1: Hero Header */}
       <ScrollReveal direction="up">
         <section className="py-2 md:py-4">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-24">
-            {/* Centered Content */}
             <div className="text-center">
-              {/* ⬇️ UPDATED: Category title with Sora ⬇️ */}
               <h1 className="heading-xl text-orange mb-2">
                 {category.display_name}
               </h1>
-              {/* ⬇️ UPDATED: Description with Inter ⬇️ */}
               <p className="text-body text-gray-500 max-w-2xl mx-auto">
                 {category.description || 'Explore our collection of premium custom printed products'}
               </p>
             </div>
             
-            {/* Stats Labels - Center */}
             <div className="flex flex-wrap justify-center gap-3 mt-3">
               <span className="bg-royal-blue px-3 py-1 rounded-full text-xs text-white shadow-sm">
                 {subCategories.length} Sub-Categories
@@ -249,7 +241,6 @@ const CategoryProducts: React.FC = () => {
               </span>
             </div>
 
-            {/* Back Button - Below Stats, Left Aligned */}
             <div className="flex justify-start mt-3 pt-2 pb-2 border-b border-orange-100">
               <Link 
                 to="/products" 
@@ -263,11 +254,55 @@ const CategoryProducts: React.FC = () => {
         </section>
       </ScrollReveal>
 
-      {/* Section 2: Sub-Categories Grid */}
+      {/* Section 2: About This Category - Full Width */}
+      <ScrollReveal direction="up">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-100">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex-1">
+                <h3 className="heading-sm text-royal-blue-dark mb-2 flex items-center gap-2">
+                  <span className="w-1 h-6 bg-royal-blue rounded-full"></span>
+                  About {category.display_name}
+                </h3>
+                <p className="text-body text-gray-600 leading-relaxed max-w-3xl">
+                  {category.description || 'Discover our premium collection of custom printed products designed for quality and style.'}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-4 flex-shrink-0">
+                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+                  <Package className="w-4 h-4 text-green" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {subCategories.reduce((acc, sub) => acc + (sub.product_count || 0), 0)} Products
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+                  <Clock className="w-4 h-4 text-orange" />
+                  <span className="text-sm font-medium text-gray-700">{content.stats.delivery_time}</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+                  <Shield className="w-4 h-4 text-royal-blue" />
+                  <span className="text-sm font-medium text-gray-700">{content.stats.quality_guarantee}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* Section 3: Sub-Categories Grid + How to Order (Side by side) */}
       <ScrollReveal direction="up">
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-6">
+            <h2 className="heading-md text-royal-blue">
+              Explore {category.display_name}
+            </h2>
+            <p className="text-body-sm text-gray-500 mt-1">
+              Showing {subCategories.length} sub-categories
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Left Column - Sub Categories Grid */}
+            {/* Left Column - Sub Categories Grid (3/4) */}
             <div className="lg:col-span-3">
               {subCategories.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-xl">
@@ -276,221 +311,142 @@ const CategoryProducts: React.FC = () => {
                   <p className="text-body text-gray-500 mt-2">Check back soon for new products</p>
                 </div>
               ) : (
-                <>
-                  <div className="mb-6">
-                    {/* ⬇️ UPDATED: Section title with Sora ⬇️ */}
-                    <h2 className="heading-md text-royal-blue">
-                      Explore {category.display_name}
-                    </h2>
-                    {/* ⬇️ UPDATED: Subtitle with Inter ⬇️ */}
-                    <p className="text-body-sm text-gray-500 mt-1">
-                      Showing {subCategories.length} sub-categories
-                    </p>
-                  </div>
-                  
-                  <div className={`grid ${gridConfig.cols} gap-5 md:gap-6`}>
-                    {subCategories.map((subCategory) => (
-                      <SubCategoryCard 
-                        key={subCategory.id} 
-                        subCategory={subCategory} 
-                        categorySlug={category.slug}
-                        size={gridConfig.size}
-                      />
-                    ))}
-                  </div>
-                </>
+                <div className={`grid ${gridConfig.cols} gap-5 md:gap-6`}>
+                  {subCategories.map((subCategory) => (
+                    <SubCategoryCard 
+                      key={subCategory.id} 
+                      subCategory={subCategory} 
+                      categorySlug={category.slug}
+                      size={gridConfig.size}
+                    />
+                  ))}
+                </div>
               )}
             </div>
 
-            {/* Right Column - Category Description Sidebar (1/4 width) */}
+            {/* Right Column - How to Order (1/4) - Same level as subcategories */}
             <aside className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-md border border-orange-100/2 p-6 sticky top-24 space-y-6">
-                {/* Category Description */}
-                <div>
-                  {/* ⬇️ UPDATED: Sidebar title with Sora ⬇️ */}
-                  <h3 className="heading-sm text-royal-blue-dark mb-3">About This Category</h3>
-                  {/* ⬇️ UPDATED: Description with Inter ⬇️ */}
-                  <p className="text-body-sm text-gray-600 leading-relaxed">
-                    {category.description || 'Discover our premium collection of custom printed products designed for quality and style.'}
-                  </p>
-                </div>
-
-                {/* Quick Stats - Dynamic from API */}
-                <div className="space-y-3 border-t border-gray-100 pt-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-green/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Package className="w-3 h-3 text-green" />
-                    </div>
-                    <div>
-                      <p className="text-body-sm text-gray-500">Available Products</p>
-                      <p className="text-cta-sm text-gray-700">
-                        {subCategories.reduce((acc, sub) => acc + (sub.product_count || 0), 0)} items
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-orange/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Clock className="w-3 h-3 text-orange" />
-                    </div>
-                    <div>
-                      <p className="text-body-sm text-gray-500">Delivery Time</p>
-                      <p className="text-cta-sm text-gray-700">{content.stats.delivery_time}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-royal-blue/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Shield className="w-3 h-3 text-royal-blue" />
-                    </div>
-                    <div>
-                      <p className="text-body-sm text-gray-500">Quality Guarantee</p>
-                      <p className="text-cta-sm text-gray-700">{content.stats.quality_guarantee}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-purple/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <TrendingUp className="w-3 h-3 text-purple" />
-                    </div>
-                    <div>
-                      <p className="text-body-sm text-gray-500">Customer Rating</p>
-                      <p className="text-cta-sm text-gray-700">{content.stats.customer_rating}</p>
-                    </div>
+              {content.how_to_order && content.how_to_order.length > 0 && (
+                <div className=" p-5 sticky top-24">
+                  <h3 className="heading-sm text-green mb-4 flex items-center justify-center gap-2">
+                    <Truck className="w-5 h-5" />
+                    How to Order
+                  </h3>
+                  <div className="space-y-3">
+                    {content.how_to_order.map((step, index) => (
+                      <div 
+                        key={step.id} 
+                        className="bg-gray-50 rounded-lg p-3 shadow-md border border-gray-100 hover:shadow-md transition-shadow duration-300"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-7 h-7 bg-royal-blue text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-royal-blue">
+                                {getIcon(step.icon)}
+                              </span>
+                              <p className="text-sm font-semibold text-gray-800">{step.title}</p>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1 leading-relaxed">{step.description}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-
-                {/* Popular Products - Dynamic from API */}
-                {content.popular_products && content.popular_products.length > 0 && (
-                  <div className="border-t border-gray-100 pt-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Zap className="w-4 h-4 text-yellow-500" />
-                      {/* ⬇️ UPDATED: Popular products title with Sora ⬇️ */}
-                      <h4 className="heading-sm text-royal-blue">Popular Products</h4>
-                    </div>
-                    <div className="space-y-3">
-                      {content.popular_products.map((product) => {
-                        // Check if product has a slug (real data from admin)
-                        const hasSlug = product.slug && product.slug.trim() !== '';
-                        
-                        const productContent = (
-                          <div className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 transition">
-                            <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                              <img
-                                src={getImageUrl(product.image) || '/api/placeholder/80/80'}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              {/* ⬇️ UPDATED: Product name with Sora ⬇️ */}
-                              <p className="text-body-sm font-medium text-gray-800 truncate group-hover:text-royal-blue transition">
-                                {product.name}
-                              </p>
-                              <div className="flex items-center gap-1">
-                                <div className="flex items-center">
-                                  {renderStars(product.rating)}
-                                </div>
-                                <span className="text-body-sm text-gray-500">{product.rating}</span>
-                              </div>
-                              {/* ⬇️ UPDATED: Price with Inter bold ⬇️ */}
-                              <p className="price-sm text-royal-blue">
-                                ETB {product.price.toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                        );
-
-                        // If slug exists, wrap in Link, otherwise just render the content
-                        return hasSlug ? (
-                          <Link 
-                            key={product.id}
-                            to={`/products/product/${product.slug}`}
-                            className="block group"
-                          >
-                            {productContent}
-                          </Link>
-                        ) : (
-                          <div key={product.id} className="block group">
-                            {productContent}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Trust Badge - Dynamic from API */}
-                {content.trust_badge && (
-                  <div className="border-t border-gray-100 pt-4">
-                    <div className="bg-green/5 rounded-lg p-3 text-center">
-                      <Award className="w-6 h-6 text-green mx-auto mb-1" />
-                      {/* ⬇️ UPDATED: Trust badge text with Inter ⬇️ */}
-                      <p className="text-body-sm font-medium text-royal-blue">{content.trust_badge.title}</p>
-                      <p className="text-body-sm text-gray-500">{content.trust_badge.rating}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </aside>
           </div>
         </section>
       </ScrollReveal>
-      
-      <ScrollReveal direction="up">
-        {/* Section 3: How to Order - Dynamic from API */}
-        {content.how_to_order && content.how_to_order.length > 0 && (
-          <section className="bg-white py-12">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 border-t border-green-100">
-              <div className="text-center mb-10 mt-2">
-                {/* ⬇️ UPDATED: How to Order title with Sora ⬇️ */}
-                <h2 className="heading-lg text-green mb-2">
-                  How to Order
-                </h2>
-                {/* ⬇️ UPDATED: Subtitle with Inter ⬇️ */}
-                <p className="text-body text-gray-500 max-w-2xl mx-auto">
-                  Follow these simple steps to get your custom printed products
-                </p>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {content.how_to_order.map((step, index) => (
-                  <div key={step.id} className="relative group">
-                    <div className="bg-gray-50 rounded-xl p-6 text-center hover:shadow-lg transition-shadow duration-300 h-full">
-                      {/* Step Number */}
-                      <div className="absolute -top-3 -left-3 w-8 h-8 bg-royal-blue text-white rounded-full flex items-center justify-center text-sm font-bold">
-                        {index + 1}
-                      </div>
-                      
-                      {/* Icon */}
-                      <div className="w-14 h-14 mx-auto mb-4 bg-royal-blue/10 rounded-full flex items-center justify-center text-royal-blue group-hover:bg-royal-blue group-hover:text-white transition-colors duration-300">
-                        {getIcon(step.icon)}
-                      </div>
-                      
-                      {/* ⬇️ UPDATED: Step title with Sora ⬇️ */}
-                      <h3 className="heading-sm text-gray-800 mb-2">
-                        {step.title}
-                      </h3>
-                      {/* ⬇️ UPDATED: Step description with Inter ⬇️ */}
-                      <p className="text-body-sm text-gray-500 leading-relaxed">
-                        {step.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+      {/* Section 4: Popular Products - Smaller cards */}
+      {content.popular_products && content.popular_products.length > 0 && (
+        <section className="bg-gray-50 py-12 border-y border-gray-100 mt-6">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <ScrollReveal direction="up">
+              <div className="mb-8">
+                <h2 className="heading-lg text-royal-blue-dark mb-1 flex items-center justify-center gap-2">
+                  <Zap className="w-6 h-6 text-yellow-500 fill-yellow-500" />
+                  Popular Products
+                </h2>
+                <p className="text-body-sm text-gray-500 flex items-center justify-center">Most loved items in this category</p>
               </div>
+            </ScrollReveal>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+              {content.popular_products.map((product) => {
+                const hasSlug = product.slug && product.slug.trim() !== '';
+                
+                return (
+                  <ScrollReveal key={product.id} direction="up" delay={0.1}>
+                    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group h-full border border-gray-100">
+                      <div className="relative aspect-square overflow-hidden bg-gray-100">
+                        <img
+                          src={getImageUrl(product.image) || '/api/placeholder/400/400'}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute top-1 right-1 bg-yellow-400/90 text-white text-[9px] px-1.5 py-0.5 rounded-full font-medium">
+                          ★ {product.rating}
+                        </div>
+                      </div>
+                      <div className="p-2.5">
+                        {hasSlug ? (
+                          <Link 
+                            to={`/products/product/${product.slug}`}
+                            className="block"
+                          >
+                            <h4 className="font-medium text-gray-800 text-xs mb-0.5 line-clamp-1 hover:text-royal-blue transition">
+                              {product.name}
+                            </h4>
+                          </Link>
+                        ) : (
+                          <h4 className="font-medium text-gray-800 text-xs mb-0.5 line-clamp-1">
+                            {product.name}
+                          </h4>
+                        )}
+                        <div className="flex items-center gap-0.5 mb-1">
+                          {renderStars(product.rating)}
+                          <span className="text-[9px] text-gray-500">({product.rating})</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-royal-blue">
+                            ETB {product.price.toLocaleString()}
+                          </p>
+                          {hasSlug ? (
+                            <Link
+                              to={`/products/product/${product.slug}`}
+                              className="text-[10px] bg-royal-blue text-white px-2 py-0.5 rounded hover:bg-royal-blue-dark transition"
+                            >
+                              View
+                            </Link>
+                          ) : (
+                            <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded">
+                              View
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </ScrollReveal>
+                );
+              })}
             </div>
-          </section>
-        )}
-      </ScrollReveal>
-      
-      {/* Section 4: Frequently Asked Questions - Dynamic from API */}
+          </div>
+        </section>
+      )}
+
+      {/* Section 5: FAQs */}
       {content.faqs && content.faqs.length > 0 && (
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-8">
-              {/* ⬇️ UPDATED: FAQ title with Sora + gradient ⬇️ */}
               <h2 className="heading-lg text-royal-blue-dark mb-2">
-                <span className=''>Frequently</span> Asked Questions
+                Frequently Asked Questions
               </h2>
-              {/* ⬇️ UPDATED: FAQ subtitle with Inter ⬇️ */}
               <p className="text-body text-gray-500">
                 Find answers to common questions about {category.display_name}
               </p>
@@ -506,7 +462,6 @@ const CategoryProducts: React.FC = () => {
                     onClick={() => toggleFaq(faq.id)}
                     className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
                   >
-                    {/* ⬇️ UPDATED: FAQ question with Sora ⬇️ */}
                     <span className="heading-sm text-gray-600 pr-4">
                       {faq.question}
                     </span>
@@ -519,13 +474,11 @@ const CategoryProducts: React.FC = () => {
                     </span>
                   </button>
                   
-                  {/* FAQ Answer - Collapsible */}
                   <div
                     className={`overflow-hidden transition-all duration-300 ease-in-out ${
                       expandedFaq === faq.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                     }`}
                   >
-                    {/* ⬇️ UPDATED: FAQ answer with Inter ⬇️ */}
                     <div className="px-4 pb-4 text-body-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
                       {faq.answer}
                     </div>
@@ -576,11 +529,9 @@ const SubCategoryCard: React.FC<{
         </div>
         
         <div className={`p-3 pt-1 ${isLarge ? 'md:p-5 md:pt-3' : ''}`}>
-          {/* ⬇️ UPDATED: Subcategory name with Sora ⬇️ */}
           <h3 className={`heading-sm text-orange ${isLarge ? 'text-lg md:text-xl' : ''} mb-1 line-clamp-1 group-hover:text-orange/80 transition`}>
             {subCategory.display_name}
           </h3>
-          {/* ⬇️ UPDATED: Subcategory description with Inter ⬇️ */}
           <p className={`${isLarge ? 'text-body' : 'text-body-sm'} text-royal-blue line-clamp-2 leading-relaxed`}>
             {subCategory.description || 'Discover our collection'}
           </p>

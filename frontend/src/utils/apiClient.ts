@@ -117,7 +117,7 @@ class ApiClient {
       }
       
       // ============================================
-      // ✅ FIX: Check for 401 Unauthorized (Session Expired)
+      // Check for 401 Unauthorized (Session Expired)
       // ============================================
       if (response.status === 401) {
         // Clear all session data

@@ -143,10 +143,11 @@ class SessionManager {
         }
         
         $sql = "SELECT COUNT(*) as count FROM admin_sessions 
-                WHERE admin_id = ? AND is_active = 1";
+                WHERE admin_id = ? AND is_active = 1 
+                AND TIMESTAMPDIFF(SECOND, last_activity, NOW()) <= ?";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$adminId]);
+        $stmt->execute([$adminId, $this->sessionTimeout]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return (int)($result['count'] ?? 0);
     }

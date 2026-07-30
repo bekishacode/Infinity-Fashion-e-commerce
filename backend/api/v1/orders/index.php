@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../../bootstrap.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
-require_once '../../../helpers/EmailHelper.php';
+require_once __DIR__ . '/../../../helpers/EmailHelper.php';
 
 $database = new Database();
 $db = $database->getConnection();

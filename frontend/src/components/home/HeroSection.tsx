@@ -12,14 +12,25 @@ const HeroSection: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [imageErrors, setImageErrors] = useState<{ [key: number]: boolean }>({});
   const [imageKey, setImageKey] = useState(Date.now());
+  const [imagesLoaded, setImagesLoaded] = useState<{ [key: number]: boolean }>({});
 
   useEffect(() => {
     const fetchSlides = async () => {
       try {
-        // Use HeroSlide[] as the type parameter
         const response = await apiClient.get<HeroSlide[]>('/homepage/hero-slides');
         if (response.success && response.data) {
           setSlides(response.data);
+          // Preload images
+          response.data.forEach((slide) => {
+            const img = new Image();
+            img.src = slide.image;
+            img.onload = () => {
+              setImagesLoaded(prev => ({ ...prev, [slide.id]: true }));
+            };
+            img.onerror = () => {
+              handleImageError(slide.id);
+            };
+          });
         }
       } catch (error) {
         console.error('Failed to fetch hero slides:', error);
@@ -76,6 +87,8 @@ const HeroSection: React.FC = () => {
   }
 
   const currentItem = slides[currentSlide];
+  const isImageLoaded = imagesLoaded[currentItem.id] || false;
+  const hasImageError = imageErrors[currentItem.id] || false;
 
   return (
     <div className="relative w-full h-full min-h-[90vh] flex flex-col">
@@ -118,17 +131,22 @@ const HeroSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Side - Image */}
+          {/* Right Side - Image with smooth fade-in */}
           <div className={`flex items-center justify-center transition-all duration-500 ${isAnimating ? 'opacity-0 transform translate-x-[20px]' : 'opacity-100 transform translate-x-0'}`}>
-            {!imageErrors[currentItem.id] ? (
+            {!hasImageError ? (
               <div className="w-full flex items-center justify-center">
                 <img 
                   key={`${currentItem.id}-${imageKey}`}
                   src={`${currentItem.image}?t=${imageKey}`}
                   alt={currentItem.title}
-                  className="w-full max-w-[600px] md:max-w-[700px] lg:max-w-[800px] xl:max-w-[900px] h-auto max-h-[500px] md:max-h-[600px] lg:max-h-[700px] xl:max-h-[750px] object-contain drop-shadow-2xl"
+                  className={`w-full max-w-[600px] md:max-w-[700px] lg:max-w-[800px] xl:max-w-[900px] h-auto max-h-[500px] md:max-h-[600px] lg:max-h-[700px] xl:max-h-[750px] object-contain drop-shadow-2xl transition-opacity duration-700 ${
+                    isImageLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
                   style={{ filter: 'drop-shadow(0 25px 25px rgb(0 0 0 / 0.15))' }}
                   onError={() => handleImageError(currentItem.id)}
+                  onLoad={() => {
+                    setImagesLoaded(prev => ({ ...prev, [currentItem.id]: true }));
+                  }}
                   loading="eager"
                 />
               </div>

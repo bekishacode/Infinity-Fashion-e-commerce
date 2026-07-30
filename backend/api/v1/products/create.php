@@ -85,15 +85,24 @@ if ($result) {
     
     // Insert images
     if (!empty($images)) {
-        $imgSql = "INSERT INTO product_images (product_id, image_url, is_primary, sort_order) 
-                   VALUES (:product_id, :image_url, :is_primary, :sort_order)";
+        $imgSql = "INSERT INTO product_images (product_id, image_url, image_type, is_primary, sort_order) 
+                   VALUES (:product_id, :image_url, :image_type, :is_primary, :sort_order)";
         $imgStmt = $db->prepare($imgSql);
+
+        // ============================================
+        // Map upload order to image_type:
+        // 0 = thumbnail, 1 = front, 2 = back, 3 = side, 4+ = detail
+        // ============================================
+        $typeByOrder = ['thumbnail', 'front', 'back', 'side'];
         
         foreach ($images as $index => $image_url) {
             $is_primary = ($index == 0) ? 1 : 0;
+            $image_type = $typeByOrder[$index] ?? 'detail';
+
             $imgStmt->execute([
                 ':product_id' => $product_id,
                 ':image_url' => $image_url,
+                ':image_type' => $image_type,
                 ':is_primary' => $is_primary,
                 ':sort_order' => $index
             ]);

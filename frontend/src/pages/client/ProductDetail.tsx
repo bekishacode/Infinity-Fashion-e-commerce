@@ -83,7 +83,7 @@ const ProductDetail: React.FC = () => {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'specs' | 'reviews'>('specs');
   const [showPodDesigner, setShowPodDesigner] = useState(false);
   const [frontDesign, setFrontDesign] = useState<File | null>(null);
   const [backDesign, setBackDesign] = useState<File | null>(null);
@@ -128,23 +128,64 @@ const ProductDetail: React.FC = () => {
 
   const handleQuantityChange = (newQuantity: number) => {
     const minQty = product?.min_quantity || 1;
-    const maxQty = selectedVariant?.stock_quantity || product?.in_stock || 999;
-    if (newQuantity >= minQty && newQuantity <= maxQty) {
+    // No max limit - this is a custom order/print business, not fixed inventory.
+    // Customers can request any quantity; fulfillment is handled manually.
+    if (newQuantity >= minQty) {
       setQuantity(newQuantity);
     }
   };
 
+  // Helper: find product's own front/back images (for POD mockup base)
+  // Prefers proper image_type tagging if set; falls back to sort_order
+  // convention (0 = main/thumbnail, 1 = front, 2 = back) for existing data
+  // where every image is currently tagged as 'detail'.
+  const getProductImageByType = (type: 'front' | 'back'): string | null => {
+    if (!product?.images || product.images.length === 0) return null;
+
+    // Preferred: properly tagged image_type
+    const tagged = product.images.find(i => i.image_type === type);
+    if (tagged) return tagged.image_url;
+
+    // Fallback: sort_order convention (1 = front, 2 = back)
+    const fallbackSortOrder = type === 'front' ? 1 : 2;
+    const bySortOrder = product.images.find(i => i.sort_order === fallbackSortOrder);
+    if (bySortOrder) return bySortOrder.image_url;
+
+    // Last resort for front only: use the primary/first image
+    if (type === 'front') {
+      const primary = product.images.find(i => i.is_primary === 1);
+      return primary?.image_url || product.images[0]?.image_url || null;
+    }
+
+    return null;
+  };
+
+  // ============================================
+  // Add to Cart - navigates to Checkout with product info
+  // ============================================
   const handleAddToCart = () => {
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 3000);
-    
-    const cartItem = {
-      product_id: product?.id,
-      variant_id: selectedVariant?.id,
-      quantity: quantity,
-      price: getCurrentPrice()
-    };
-    console.log('Added to cart:', cartItem);
+    if (!product) return;
+
+    navigate('/checkout', {
+      state: {
+        product: {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          service_type: product.service_type,
+          min_quantity: product.min_quantity || 1,
+        },
+        variant: selectedVariant
+          ? {
+              id: selectedVariant.id,
+              size: selectedVariant.size,
+              color: selectedVariant.color,
+              price_adjustment: selectedVariant.price_adjustment,
+            }
+          : null,
+        quantity: quantity,
+      },
+    });
   };
 
   const getCurrentPrice = () => {
@@ -152,25 +193,6 @@ const ProductDetail: React.FC = () => {
     const basePrice = product.price;
     const adjustment = selectedVariant?.price_adjustment || 0;
     return basePrice + adjustment;
-  };
-
-  const getStockStatus = () => {
-    if (selectedVariant) {
-      if (selectedVariant.stock_quantity === 0) {
-        return { text: 'Out of Stock', color: 'text-red-600', inStock: false };
-      }
-      if (selectedVariant.stock_quantity < 10) {
-        return { text: `Only ${selectedVariant.stock_quantity} left`, color: 'text-orange-600', inStock: true };
-      }
-      return { text: 'In Stock', color: 'text-green-600', inStock: true };
-    }
-    if (product?.in_stock === 0) {
-      return { text: 'Out of Stock', color: 'text-red-600', inStock: false };
-    }
-    if (product?.in_stock && product.in_stock < 10) {
-      return { text: `Only ${product.in_stock} left`, color: 'text-orange-600', inStock: true };
-    }
-    return { text: 'In Stock', color: 'text-green-600', inStock: true };
   };
 
   const handleFileUpload = (type: 'front' | 'back', file: File) => {
@@ -189,16 +211,37 @@ const ProductDetail: React.FC = () => {
     }
   };
 
+  // ============================================
+  // POD Order - navigates to Checkout with product + design files
+  // ============================================
   const handlePodOrder = () => {
-    console.log('POD Order:', {
-      product,
-      frontDesign,
-      backDesign,
-      quantity
+    if (!product) return;
+
+    navigate('/checkout', {
+      state: {
+        product: {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          service_type: product.service_type,
+          min_quantity: product.min_quantity || 1,
+        },
+        variant: selectedVariant
+          ? {
+              id: selectedVariant.id,
+              size: selectedVariant.size,
+              color: selectedVariant.color,
+              price_adjustment: selectedVariant.price_adjustment,
+            }
+          : null,
+        quantity: quantity,
+        frontImage: getProductImageByType('front'),
+        backImage: getProductImageByType('back'),
+        frontDesign: frontDesign,
+        backDesign: backDesign,
+      },
     });
     setShowPodDesigner(false);
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 3000);
   };
 
   const nextImage = () => {
@@ -251,7 +294,6 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const stockStatus = getStockStatus();
   const currentPrice = getCurrentPrice();
   const sizes = Array.from(new Set(product.variants.map(v => v.size)));
   const colors = Array.from(new Set(product.variants.map(v => v.color)));
@@ -346,7 +388,6 @@ const ProductDetail: React.FC = () => {
               </div>
             )}
 
-            {/* ⬇️ UPDATED: Product name with Sora ⬇️ */}
             <h1 className="heading-md text-gray-800 mb-2">{product.name}</h1>
             
             {/* Rating */}
@@ -361,7 +402,6 @@ const ProductDetail: React.FC = () => {
 
             {/* Price */}
             <div className="mb-6">
-              {/* ⬇️ UPDATED: Price with Inter bold ⬇️ */}
               <div className="price-md text-royal-blue">
                 ETB {currentPrice.toLocaleString()}
               </div>
@@ -372,7 +412,6 @@ const ProductDetail: React.FC = () => {
               )}
             </div>
 
-            {/* ⬇️ UPDATED: Description with Inter ⬇️ */}
             <p className="text-body text-gray-600 mb-6 text-justify sm:mr-0 mr-2 sm:ml-0 ml-2">{product.description}</p>
 
             {/* Variants */}
@@ -386,11 +425,10 @@ const ProductDetail: React.FC = () => {
                       <button
                         key={size}
                         onClick={() => variant && handleVariantSelect(variant)}
-                        disabled={variant?.stock_quantity === 0}
                         className={`px-4 py-2 border rounded-lg transition text-body-sm ${
                           selectedVariant?.size === size
                             ? 'border-royal-blue bg-royal-blue/10 text-royal-blue'
-                            : 'border-gray-200 hover:border-gray-300 disabled:opacity-50 disabled:line-through'
+                            : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
                         {size}
@@ -411,7 +449,6 @@ const ProductDetail: React.FC = () => {
                       <button
                         key={color}
                         onClick={() => variant && handleVariantSelect(variant)}
-                        disabled={variant?.stock_quantity === 0}
                         className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition text-body-sm ${
                           selectedVariant?.color === color
                             ? 'border-royal-blue bg-royal-blue/10 text-royal-blue'
@@ -441,10 +478,28 @@ const ProductDetail: React.FC = () => {
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-16 text-center font-medium">{quantity}</span>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val)) {
+                      handleQuantityChange(val);
+                    } else if (e.target.value === '') {
+                      setQuantity(0);
+                    }
+                  }}
+                  onBlur={() => {
+                    const minQty = product?.min_quantity || 1;
+                    if (!quantity || quantity < minQty) {
+                      setQuantity(minQty);
+                    }
+                  }}
+                  min={product?.min_quantity || 1}
+                  className="w-20 text-center font-medium border rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-royal-blue [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
                 <button
                   onClick={() => handleQuantityChange(quantity + 1)}
-                  disabled={selectedVariant ? quantity >= selectedVariant.stock_quantity : false}
                   className="w-10 h-10 flex items-center justify-center border rounded-lg disabled:opacity-50 hover:bg-gray-50"
                 >
                   <Plus className="w-4 h-4" />
@@ -455,16 +510,12 @@ const ProductDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Stock Status */}
-            <div className={`text-body-sm font-medium mb-6 ${stockStatus.color}`}>
-              {stockStatus.text}
-            </div>
+            {/* Stock status removed - made-to-order, no fixed inventory limit shown to customers */}
 
             {/* Add to Cart Button */}
             <div className="flex gap-3 mb-8">
               <button
                 onClick={isPOD ? () => setShowPodDesigner(true) : handleAddToCart}
-                disabled={!stockStatus.inStock}
                 className="flex-1 bg-royal-blue text-white py-3 rounded-lg font-semibold hover:bg-royal-blue-dark transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-cta"
               >
                 {isPOD ? <Sparkles className="w-5 h-5" /> : <ShoppingCart className="w-5 h-5" />}
@@ -597,7 +648,6 @@ const ProductDetail: React.FC = () => {
                   initialRating={product.rating}
                   initialReviewCount={product.review_count}
                   onReviewAdded={() => {
-                    // Refresh product data to update rating
                     fetchProduct();
                   }}
                 />
@@ -608,7 +658,6 @@ const ProductDetail: React.FC = () => {
         {/* Related Products */}
         {product.related_products && product.related_products.length > 0 && (
           <div className="mt-12">
-            {/* ⬇️ UPDATED: Related products title with Sora ⬇️ */}
             <h2 className="heading-lg text-gray-800 mb-6">You May Also Like</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {product.related_products.map((related) => (
@@ -622,12 +671,10 @@ const ProductDetail: React.FC = () => {
                       />
                     </div>
                     <div className="p-3">
-                      {/* ⬇️ UPDATED: Related product name with Sora ⬇️ */}
                       <h3 className="heading-sm text-gray-800 line-clamp-2">{related.name}</h3>
                       <div className="flex items-center gap-1 mt-1">
                         {renderStars(related.rating)}
                       </div>
-                      {/* ⬇️ UPDATED: Related price with Inter bold ⬇️ */}
                       <div className="price-sm text-royal-blue mt-1">
                         ETB {related.price.toLocaleString()}
                       </div>
@@ -645,7 +692,6 @@ const ProductDetail: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-              {/* ⬇️ UPDATED: Modal title with Sora ⬇️ */}
               <h2 className="heading-md">Customize Your {product.name}</h2>
               <button onClick={() => setShowPodDesigner(false)} className="p-1 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5" />
